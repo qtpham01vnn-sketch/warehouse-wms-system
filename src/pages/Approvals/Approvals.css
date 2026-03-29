@@ -1,0 +1,114 @@
+.approvals-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px - var(--spacing-4) * 2);
+}
+
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.max-w-2xl {
+  max-width: 42rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.w-24 {
+  width: 6rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.bg-black\/20 {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.bg-black\/30 {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.bg-error {
+  background-color: var(--status-error);
+}
+
+.bg-error\/20 {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.bg-error\/30:hover {
+  background-color: rgba(239, 68, 68, 0.3);
+}
+
+.bg-warning\/20 {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+
+.bg-warning\/30:hover {
+  background-color: rgba(245, 158, 11, 0.3);
+}
+
+.text-white {
+  color: white;
+}
+
+.border-primary {
+  border-color: var(--color-primary);
+}
+
+.mt-auto {
+  margin-top: auto;
+}
+
+/* Timeline */
+.timeline-wrapper {
+  position: relative;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+  margin-left: 12px;
+  padding-left: 20px;
+}
+
+.timeline-item {
+  position: relative;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -27px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.sticky {
+  position: sticky;
+}
+
+.bottom-0 {
+  bottom: 0;
+}
+
+.z-10 {
+  z-index: 10;
+}

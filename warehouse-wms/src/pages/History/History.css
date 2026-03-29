@@ -1,0 +1,8 @@
+.history-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-xs { font-size: 11px; }
+.text-tiny { font-size: 10px; }
+.font-mono { font-family: var(--mono); }

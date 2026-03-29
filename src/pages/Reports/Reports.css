@@ -1,0 +1,14 @@
+.reports-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px - var(--spacing-4) * 2);
+}
+
+.bg-info\/20 { background-color: rgba(59, 130, 246, 0.2); }
+.text-info { color: var(--color-primary); }
+
+.bg-warning\/10 { background-color: rgba(245, 158, 11, 0.1); }
+.border-warning\/20 { border-color: rgba(245, 158, 11, 0.2); }
+.text-warning { color: var(--status-warning); }
+
+.leading-relaxed { line-height: 1.625; }

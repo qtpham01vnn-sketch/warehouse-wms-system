@@ -1,0 +1,8 @@
+.settings-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.icon-glow {
+  filter: drop-shadow(0 0 10px currentColor);
+}

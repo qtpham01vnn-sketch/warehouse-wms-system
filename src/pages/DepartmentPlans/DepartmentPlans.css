@@ -1,0 +1,46 @@
+.dept-plans-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px - var(--spacing-4) * 2);
+}
+
+.bg-primary\/20 {
+  background-color: rgba(99, 102, 241, 0.2);
+}
+
+.plan-detail-modal {
+  max-width: 800px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.tasks-table-wrapper {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.divide-y > * + * {
+  border-top-width: 1px;
+  border-top-style: solid;
+}
+
+.divide-white\/10 > * + * {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.hover\:bg-white\/5:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color, fill, stroke;
+  transition-duration: 150ms;
+}
+
+.w-full { width: 100%; }
+.m-0 { margin: 0; }
+.p-4 { padding: 16px; }
+.overflow-hidden { overflow: hidden; }
