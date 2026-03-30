@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@import './styles/vanguard.css';
+
+@theme {
+  --color-vanguard-bg: var(--bg-primary);
+  --color-vanguard-tile: var(--glass-bg);
+  --color-vanguard-accent: var(--accent-cyan);
+  --color-vanguard-blue: var(--accent-blue);
+  --color-vanguard-purple: var(--accent-purple);
+  --color-vanguard-pink: var(--accent-pink);
+  
+  --color-vanguard-status-active: var(--status-active);
+  --color-vanguard-status-maintenance: var(--status-maintenance);
+  --color-vanguard-status-repair: var(--status-repair);
+  --color-vanguard-status-inactive: var(--status-inactive);
+
+  --font-inter: "Inter", sans-serif;
+  --font-mono: "Source Code Pro", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-vanguard-bg text-white font-inter antialiased;
+  }
+}
+
+@layer components {
+  .hud-tile {
+    @apply bg-vanguard-tile border border-white/5 rounded-xl backdrop-blur-md shadow-xl transition-all duration-300;
+  }
+  
+  .hud-tile:hover {
+    @apply border-vanguard-accent/30 shadow-vanguard-accent/5;
+  }
+}

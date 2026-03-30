@@ -1,0 +1,174 @@
+:root {
+  /* Core Palette - Deeper, more industrial */
+  --bg-primary: #08080c;
+  --bg-secondary: #0f0f18;
+  --bg-tertiary: #161625;
+  --bg-accent: rgba(20, 20, 35, 0.4);
+  
+  /* Accent Colors - High Vibrancy */
+  --accent-cyan: #00f0ff;
+  --accent-blue: #3b82f6;
+  --accent-purple: #d000ff;
+  --accent-pink: #f43f5e;
+  
+  /* Status Colors - Refined for EMS */
+  --status-active: #10b981;      /* Emerald Green */
+  --status-warning: #fbbf24;     /* Warning Amber */
+  --status-critical: #ef4444;    /* Critical Red */
+  --status-maintenance: #f59e0b; /* Amber/Orange */
+  --status-repair: #f43f5e;      /* Pink/Red */
+  --status-inactive: #4b5563;    /* Muted Gray */
+  
+  /* Spacing System - 8px Grid */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  
+  /* Typography Scale */
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Glassmorphism Refined */
+  --glass-bg: rgba(10, 10, 15, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: #ffffff;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.font-mono, .font-tactical {
+  font-family: 'Source Code Pro', monospace;
+  letter-spacing: 0.02em;
+}
+
+/* --- HUD Components --- */
+
+.hud-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--space-sm);
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-fast);
+}
+
+.hud-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--accent-cyan);
+  opacity: 0.3;
+}
+
+.hud-card:hover {
+  border-color: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.05);
+  background: rgba(15, 15, 25, 0.8);
+}
+
+.hud-glow-cyan { text-shadow: 0 0 10px rgba(0, 240, 255, 0.4); }
+.hud-glow-amber { text-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
+.hud-glow-red { text-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+/* --- Layout Elements --- */
+
+.glass-header {
+  height: 64px;
+  background: rgba(18, 18, 30, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-xl);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.sidebar {
+  width: 220px;
+  height: 100vh;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--glass-border);
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  transition: width var(--transition-fast);
+}
+
+.main-content {
+  margin-left: 220px;
+  min-height: 100vh;
+  padding-top: 64px;
+}
+
+/* --- Status Badges (Refined) --- */
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Source Code Pro', monospace;
+  border: 1px solid transparent;
+}
+
+.badge-active { background: rgba(16, 185, 129, 0.1); color: var(--status-active); border-color: rgba(16, 185, 129, 0.2); }
+.badge-warning { background: rgba(251, 191, 36, 0.1); color: var(--status-warning); border-color: rgba(251, 191, 36, 0.2); }
+.badge-critical { background: rgba(239, 68, 68, 0.1); color: var(--status-critical); border-color: rgba(239, 68, 68, 0.2); }
+.badge-maintenance { background: rgba(245, 158, 11, 0.1); color: var(--status-maintenance); border-color: rgba(245, 158, 11, 0.2); }
+.badge-repair { background: rgba(244, 63, 94, 0.1); color: var(--status-repair); border-color: rgba(244, 63, 94, 0.2); }
+.badge-inactive { background: rgba(75, 85, 99, 0.1); color: var(--status-inactive); border-color: rgba(75, 85, 99, 0.2); }
+
+/* --- Micro-Interactions --- */
+
+.hover-glow:hover {
+  filter: brightness(1.2) drop-shadow(0 0 8px currentColor);
+}
+
+.transition-tactical {
+  transition: all var(--transition-fast);
+}
