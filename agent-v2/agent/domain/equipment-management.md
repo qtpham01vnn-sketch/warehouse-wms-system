@@ -1,40 +1,82 @@
-# Domain: Equipment Management
+# Domain: Equipment # Equipment Management Domain
 
-Định nghĩa nghiệp vụ và cấu trúc dữ liệu cốt lõi cho hệ thống quản lý thiết bị.
+## Core Modules
 
-## 🏗 Entities
+1. Equipment List
+2. Equipment Details
+3. Maintenance Management
+4. Repair Requests
+5. Calibration Tracking
+6. Warranty Tracking
+7. Cost Tracking
+8. Spare Parts Inventory
+9. Alerts & Notifications
 
-### 1. Equipment (Thiết bị)
-- `id`: UUID (Primary Key)
-- `name`: String (Tên thiết bị)
-- `serial_number`: String (Số sê-ri, Unique)
-- `category_id`: UUID (Foreign Key -> Category)
-- `status`: Enum (Available, In Use, Maintenance, Retired)
-- `location`: String (Vị trí hiện tại)
-- `purchase_date`: Date (Ngày mua)
-- `last_maintained`: Date (Ngày bảo trì gần nhất)
+---
 
-### 2. Category (Danh mục)
-- `id`: UUID (PK)
-- `name`: String (IT, Industrial, Office, Tool, etc.)
-- `description`: Text
+## Equipment Data Structure
 
-### 3. MaintenanceLog (Nhật ký bảo trì)
-- `id`: UUID (PK)
-- `equipment_id`: UUID (FK)
-- `action_date`: Date
-- `technician`: String
-- `description`: Text
-- `cost`: Decimal
+- asset_code
+- asset_name
+- model
+- serial_number
+- manufacturer
+- year
+- purchase_date
+- install_date
+- department
+- location
+- status
+- cost
+- maintenance_cycle
+- next_maintenance_date
+- warranty_expiry
+- calibration_due
 
-## 🛡 Business Rules
+---
 
-1. **Unique Serial Number**: Mỗi thiết bị phải có một số sê-ri duy nhất để tránh trùng lặp.
-2. **Status Transition**: 
-   - Thiết bị chỉ có thể chuyển sang trạng thái "In Use" nếu đang ở trạng thái "Available".
-   - Khi thiết bị ở trạng thái "Maintenance", nó không thể được chuyển sang "In Use".
-3. **Maintenance Alert**: Hệ thống nên cảnh báo nếu thiết bị đã quá 6 tháng chưa được bảo trì (dựa trên `last_maintained`).
+## Status Types
 
-## 📊 Data Mapping
-- **Supabase Table**: `equipments`, `categories`, `maintenance_logs`.
-- **Primary Domain Logic**: `agent/domain/equipment-management.md`.
+- active
+- maintenance
+- repair
+- inactive
+
+---
+
+## Maintenance Workflow
+
+1. Schedule maintenance
+2. Perform maintenance
+3. Log maintenance
+4. Update next schedule
+
+---
+
+## Repair Workflow
+
+1. Create repair request
+2. Assign technician
+3. Repair in progress
+4. Complete repair
+5. Log cost
+
+---
+
+## Alerts
+
+- maintenance due
+- overdue maintenance
+- warranty expiring
+- abnormal cost increase
+
+---
+
+## Dashboard Metrics
+
+- total equipment
+- active equipment
+- maintenance count
+- repair count
+- OEE
+- cost trends
