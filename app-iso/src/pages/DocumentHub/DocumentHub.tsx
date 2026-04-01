@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Plus, Eye, Download, FileSpreadsheet } from 'lucide-react';
 import { documentService } from '../../services/documentService';
 import { useAuth } from '../../context/AuthContext';
@@ -11,17 +11,22 @@ import './DocumentHub.css';
 const DocumentHub: React.FC = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialDept = searchParams.get('dept') || 'ALL';
+
   const [documents, setDocuments] = useState<ISODocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<DocumentType | 'ALL'>('ALL');
+  const [deptFilter, setDeptFilter] = useState<string>(initialDept);
 
   const fetchDocs = async () => {
     setLoading(true);
     try {
-      const data = await documentService.getDocuments(profile, {
+      const data = await documentService.getDocuments({
         type: typeFilter !== 'ALL' ? typeFilter : undefined,
+        department_id: deptFilter !== 'ALL' ? deptFilter : undefined,
         search: searchTerm
       });
       setDocuments(data);
@@ -34,7 +39,7 @@ const DocumentHub: React.FC = () => {
 
   useEffect(() => {
     fetchDocs();
-  }, [typeFilter, searchTerm, profile]);
+  }, [typeFilter, deptFilter, searchTerm, profile]);
 
   const handleExport = async () => {
     if (!user || !profile) return;
@@ -79,15 +84,26 @@ const DocumentHub: React.FC = () => {
       <div className="controls-row glass-card">
         <div className="search-box">
           <Search size={20} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm theo mã tài liệu..." 
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo mã tài liệu..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="filter-group">
           <Filter size={18} />
+          <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
+            <option value="ALL">Tất cả phòng ban</option>
+            <option value="Ban ISO">Ban ISO</option>
+            <option value="P.TC-HC">P.TC-HC</option>
+            <option value="Phòng KHTH">Phòng KHTH</option>
+            <option value="P.TK">P.TK</option>
+            <option value="P.KT-CN">P.KT-CN</option>
+            <option value="PXSX">PXSX</option>
+            <option value="PXCĐ NL">PXCĐ NL</option>
+            <option value="P.KD">P.KD</option>
+          </select>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)}>
             <option value="ALL">Tất cả loại</option>
             <option value="QT">QT - Quy trình</option>
@@ -121,17 +137,17 @@ const DocumentHub: React.FC = () => {
                     <span className="type-tag">{doc.type}</span>
                     {doc.title}
                   </td>
-                  <td>{doc.department}</td>
+                  <td>{doc.department_id}</td>
                   <td><span className={`badge badge-${doc.status}`}>{doc.status}</span></td>
-                  <td>{doc.effective_date}</td>
+                  <td>{doc.effective_date || 'N/A'}</td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className="actions-cell">
                       <button className="btn-icon" title="Xem" onClick={() => navigate(`/documents/${doc.id}`)}>
                         <Eye size={18} />
                       </button>
-                      <button 
-                        className="btn-icon" 
-                        title="Tải về" 
+                      <button
+                        className="btn-icon"
+                        title="Tải về"
                         onClick={() => doc.current_version_id && user && profile && documentService.getFileActions(doc.id, doc.current_version_id, user.id, profile.full_name || 'User').download()}
                       >
                         <Download size={18} />
@@ -150,17 +166,17 @@ const DocumentHub: React.FC = () => {
         )}
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         title="Đăng ký tài liệu ISO mới"
       >
-        <DocumentForm 
+        <DocumentForm
           onSuccess={() => {
             setIsModalOpen(false);
             fetchDocs();
-          }} 
-          onCancel={() => setIsModalOpen(false)} 
+          }}
+          onCancel={() => setIsModalOpen(false)}
         />
       </Modal>
     </div>

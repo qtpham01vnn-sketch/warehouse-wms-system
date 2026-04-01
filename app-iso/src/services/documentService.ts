@@ -2,22 +2,25 @@ import { supabase } from './supabaseClient';
 import * as XLSX from 'xlsx';
 import type { 
   ISODocument, DocumentVersion, DocumentStatus, 
-  Profile, ActivityLog 
+  ActivityLog 
 } from '../types';
 
+const VALID_TRANSITIONS: Record<DocumentStatus, DocumentStatus[]> = {
+  'draft': ['under_review'],
+  'under_review': ['approved', 'draft'],
+  'approved': ['active', 'draft'],
+  'active': ['draft', 'obsolete'],
+  'obsolete': ['active', 'draft']
+};
+
 export const documentService = {
-  async getDocuments(profile: Profile | null, filters?: { type?: string, department?: string, status?: string, search?: string }) {
+  async getDocuments(filters?: { type?: string, department_id?: string, status?: string, search?: string }) {
     let query = supabase.from('iso_documents').select('*');
     
     if (filters?.type) query = query.eq('type', filters.type);
     if (filters?.status) query = query.eq('status', filters.status);
     if (filters?.search) query = query.ilike('code', `%${filters.search}%`);
-    
-    if (profile && profile.role !== 'Admin' && !filters?.department) {
-      query = query.or(`department.eq.${profile.department},visibility.eq.company_wide`);
-    } else if (filters?.department) {
-      query = query.eq('department', filters.department);
-    }
+    if (filters?.department_id) query = query.eq('department_id', filters.department_id);
     
     const { data, error } = await query.order('code', { ascending: true });
     if (error) throw error;
@@ -45,13 +48,12 @@ export const documentService = {
   },
 
   async exportToExcel(docs: ISODocument[]) {
-    // 8 Required columns: code, name, version, status, dept, effective, review, last approved
     const reportData = docs.map(doc => ({
       'Mã tài liệu': doc.code,
       'Tên tài liệu': doc.title,
-      'Phiên bản': 'v1.0', // simplified
+      'Phiên bản': 'v1.0',
       'Trạng thái': doc.status,
-      'Phòng ban': doc.department,
+      'Phòng ban': doc.department_id,
       'Ngày hiệu lực': doc.effective_date,
       'Ngày rà soát': doc.next_review_date,
       'Ngày phê duyệt': doc.published_date
@@ -60,9 +62,6 @@ export const documentService = {
     const worksheet = XLSX.utils.json_to_sheet(reportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'ISO Documents');
-
-    // Styling placeholder (XLSX handles basic, but style requires pro version or extra steps)
-    // Here we generate the file
     XLSX.writeFile(workbook, `Bao_cao_ISO_${new Date().toISOString().split('T')[0]}.xlsx`);
   },
 
@@ -78,7 +77,12 @@ export const documentService = {
 
     const { data: doc, error: docError } = await supabase
       .from('iso_documents')
-      .insert([docData])
+      .insert([{
+        ...docData,
+        owner_id: userId,
+        owner_name: userName,
+        status: 'draft' // Luôn bắt đầu từ Draft
+      }])
       .select()
       .single();
 
@@ -96,7 +100,7 @@ export const documentService = {
 
     if (verError) throw verError;
 
-    await this.logWorkflow(doc.id, userId, userName, null, docData.status);
+    await this.logWorkflow(doc.id, userId, userName, null, 'draft', 'Khởi tạo tài liệu');
     return { doc, version };
   },
 
@@ -105,25 +109,51 @@ export const documentService = {
     fromStatus: DocumentStatus, 
     toStatus: DocumentStatus, 
     userId: string, 
-    userName: string
+    userName: string,
+    role: string,
+    comment?: string
   ) {
-    if (toStatus === 'active' && fromStatus !== 'approved') {
-      throw new Error('Tài liệu phải được phê duyệt (Approved) trước khi ban hành (Active).');
+    // 1. Enforce State Machine (Except for Admin Override)
+    const isAdmin = role === 'Admin';
+    if (!isAdmin) {
+      const allowed = VALID_TRANSITIONS[fromStatus] || [];
+      if (!allowed.includes(toStatus)) {
+        throw new Error(`Chuyển đổi từ ${fromStatus} sang ${toStatus} không hợp lệ theo quy trình ISO.`);
+      }
+
+      // 2. Enforce Mandatory Comments
+      const needsComment = (toStatus === 'draft' && (fromStatus === 'under_review' || fromStatus === 'approved' || fromStatus === 'active'));
+      if (needsComment && !comment) {
+        throw new Error('Bạn bắt buộc phải nhập lý do (Comment) khi Từ chối (Reject) hoặc Sửa đổi (Revise).');
+      }
+    }
+
+    const updatePayload: any = { 
+      status: toStatus, 
+      updated_at: new Date().toISOString() 
+    };
+
+    if (toStatus === 'active') {
+      updatePayload.published_date = new Date().toISOString().split('T')[0];
+      updatePayload.effective_date = new Date().toISOString().split('T')[0];
     }
 
     const { error } = await supabase
       .from('iso_documents')
-      .update({ status: toStatus, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', documentId);
     
     if (error) throw error;
 
+    // 3. Version Handling when Active
     if (toStatus === 'active') {
+      // Mark all previous versions as NOT active
       await supabase
         .from('iso_document_versions')
         .update({ is_active: false })
         .eq('document_id', documentId);
       
+      // Mark latest version as active
       const { data: latestVer } = await supabase
         .from('iso_document_versions')
         .select('id')
@@ -145,16 +175,17 @@ export const documentService = {
       }
     }
 
-    await this.logWorkflow(documentId, userId, userName, fromStatus, toStatus);
+    await this.logWorkflow(documentId, userId, userName, fromStatus, toStatus, comment);
   },
 
-  async logWorkflow(documentId: string, userId: string, userName: string, from: DocumentStatus | null, to: DocumentStatus) {
+  async logWorkflow(documentId: string, userId: string, userName: string, from: DocumentStatus | null, to: DocumentStatus, comment?: string) {
     await supabase.from('iso_workflow_logs').insert([{
       document_id: documentId,
       user_id: userId,
       user_name: userName,
       from_status: from,
-      to_status: to
+      to_status: to,
+      comment: comment || (from === null ? 'Khởi tạo' : 'Cập nhật trạng thái')
     }]);
   },
 

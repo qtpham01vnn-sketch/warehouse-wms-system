@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, Download, Eye, User, Calendar, 
-  Clock, Shield, Send, CheckCircle, FileCheck, Archive 
+import {
+  ArrowLeft, Download, Eye, User, Calendar,
+  Clock, Shield, Send, CheckCircle, FileCheck, Archive
 } from 'lucide-react';
 import { documentService } from '../../services/documentService';
 import { useAuth } from '../../context/AuthContext';
@@ -38,15 +38,27 @@ const DocumentDetail: React.FC = () => {
     fetchData();
   }, [id]);
 
-  const handleTransition = async (toStatus: DocumentStatus) => {
+  const handleTransition = async (toStatus: DocumentStatus, comment?: string) => {
     if (!doc || !user || !profile) return;
+    
+    // Yêu cầu nhập lý do cho các bước quan trọng
+    let finalComment = comment;
+    const needsComment = (toStatus === 'draft' && (doc.status === 'under_review' || doc.status === 'approved' || doc.status === 'active'));
+    
+    if (needsComment && !finalComment) {
+      finalComment = window.prompt('Vui lòng nhập lý do (Comment) cho hành động này:') || '';
+      if (!finalComment) return; // Hủy nếu không nhập
+    }
+
     try {
       await documentService.transitionStatus(
-        doc.id, 
-        doc.status, 
-        toStatus, 
-        user.id, 
-        profile.full_name || 'User'
+        doc.id,
+        doc.status,
+        toStatus,
+        user.id,
+        profile.full_name || 'User',
+        profile.role,
+        finalComment
       );
       await fetchData();
     } catch (err: any) {
@@ -72,49 +84,75 @@ const DocumentDetail: React.FC = () => {
             <div className="doc-meta-top">
               <span className="type-tag">{doc.type}</span>
               <span className={`badge badge-${doc.status}`}>{doc.status}</span>
-              <span className="badge badge-outline"><Shield size={12} /> {doc.visibility}</span>
+              <span className="badge badge-outline"><Shield size={12} /> {doc.access_scope}</span>
               {isActive && <span className="badge badge-locked"><Shield size={12} /> LOCKED</span>}
             </div>
             <h1 className="gradient-text">{doc.code}: {doc.title}</h1>
           </div>
         </div>
         <div className="header-actions">
-          {doc.status === 'draft' && isReviewer && (
+          {/* Draft -> Under Review */}
+          {doc.status === 'draft' && (
             <button className="btn-secondary" onClick={() => handleTransition('under_review')}>
               <Send size={18} /> Gửi xem xét
             </button>
           )}
+
+          {/* Under Review -> Approved or Back to Draft (Reject) */}
           {doc.status === 'under_review' && isReviewer && (
-            <button className="btn-secondary" onClick={() => handleTransition('approved')}>
-              <CheckCircle size={18} /> Phê duyệt
-            </button>
+            <div className="btn-group">
+              <button className="btn-primary" onClick={() => handleTransition('approved')}>
+                <CheckCircle size={18} /> Phê duyệt
+              </button>
+              <button className="btn-danger-outline" onClick={() => handleTransition('draft')}>
+                <Archive size={18} /> Từ chối
+              </button>
+            </div>
           )}
+
+          {/* Approved -> Active or Back to Draft */}
           {doc.status === 'approved' && isApprover && (
-            <button className="btn-primary" onClick={() => handleTransition('active')}>
-              <FileCheck size={18} /> Ban hành
-            </button>
+            <div className="btn-group">
+              <button className="btn-primary" onClick={() => handleTransition('active')}>
+                <FileCheck size={18} /> Ban hành
+              </button>
+              <button className="btn-secondary" onClick={() => handleTransition('draft')}>
+                <Send size={18} /> Hủy để sửa lại
+              </button>
+            </div>
           )}
-          {doc.status === 'active' && isISOAdmin && (
+
+          {/* Active -> Draft (Revise) or Obsolete */}
+          {doc.status === 'active' && (
             <div className="admin-actions">
               <button className="btn-secondary" onClick={() => handleTransition('draft')}>
                 <Send size={18} /> Tạo bản thảo mới (Revise)
               </button>
-              <button className="btn-danger-outline" onClick={() => handleTransition('obsolete')}>
-                <Archive size={18} /> Lưu trữ
-              </button>
+              {isISOAdmin && (
+                <button className="btn-danger-outline" onClick={() => handleTransition('obsolete')}>
+                  <Archive size={18} /> Lưu trữ (Obsolete)
+                </button>
+              )}
             </div>
+          )}
+
+          {/* Obsolete -> Active (Restore - Admin only) */}
+          {doc.status === 'obsolete' && isISOAdmin && (
+            <button className="btn-primary" onClick={() => handleTransition('active', 'Khôi phục tài liệu từ lưu trữ')}>
+              <CheckCircle size={18} /> Khôi phục (Active)
+            </button>
           )}
         </div>
       </header>
 
       <div className="detail-tabs">
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           Thông tin chung
         </button>
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => setActiveTab('history')}
         >
@@ -130,7 +168,7 @@ const DocumentDetail: React.FC = () => {
               <div className="info-list">
                 <div className="info-item">
                   <User size={18} />
-                  <div><span className="label">Người soạn thảo</span><p>{doc.owner}</p></div>
+                  <div><span className="label">Người soạn thảo</span><p>{doc.owner_name}</p></div>
                 </div>
                 <div className="info-item">
                   <User size={18} />
@@ -155,20 +193,20 @@ const DocumentDetail: React.FC = () => {
                 </div>
               </div>
             </section>
-            
+
             <section className="current-version-info glass-card">
               <div className="section-header-row">
                 <h3>Phiên bản hiện hành</h3>
                 {currentVersion && user && profile && (
                   <div className="ver-actions">
-                    <button 
-                      className="btn-icon" 
+                    <button
+                      className="btn-icon"
                       onClick={() => documentService.getFileActions(doc.id, currentVersion.file_url, user.id, profile.full_name || 'User').view()}
                     >
                       <Eye size={18} />
                     </button>
-                    <button 
-                      className="btn-icon" 
+                    <button
+                      className="btn-icon"
                       onClick={() => documentService.getFileActions(doc.id, currentVersion.file_url, user.id, profile.full_name || 'User').download()}
                     >
                       <Download size={18} />
@@ -183,7 +221,7 @@ const DocumentDetail: React.FC = () => {
                     <span className="ver-date">{new Date(currentVersion.created_at).toLocaleDateString('vi-VN')}</span>
                   </div>
                   <p className="ver-log">{currentVersion.change_log || 'Không có log thay đổi.'}</p>
-                  <p className="ver-user">Tải lên bởi: {currentVersion.uploader_name || doc.owner}</p>
+                  <p className="ver-user">Tải lên bởi: {currentVersion.uploader_name || doc.owner_name}</p>
                 </div>
               ) : (
                 <p className="empty-msg">Chưa có phiên bản nào.</p>
@@ -211,21 +249,21 @@ const DocumentDetail: React.FC = () => {
                     <td>{ver.uploader_name}</td>
                     <td>{new Date(ver.created_at).toLocaleDateString('vi-VN')}</td>
                     <td>
-                      {ver.is_active ? 
-                        <span className="badge badge-active">Hiện hành</span> : 
+                      {ver.is_active ?
+                        <span className="badge badge-active">Hiện hành</span> :
                         <span className="badge badge-draft">Lưu trữ</span>
                       }
                     </td>
                     <td>
                       <div className="actions-cell">
-                        <button 
-                          className="btn-icon" 
+                        <button
+                          className="btn-icon"
                           onClick={() => user && profile && documentService.getFileActions(doc.id, ver.file_url, user.id, profile.full_name || 'User').view()}
                         >
                           <Eye size={16} />
                         </button>
-                        <button 
-                          className="btn-icon" 
+                        <button
+                          className="btn-icon"
                           onClick={() => user && profile && documentService.getFileActions(doc.id, ver.file_url, user.id, profile.full_name || 'User').download()}
                         >
                           <Download size={16} />

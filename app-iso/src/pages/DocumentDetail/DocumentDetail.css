@@ -97,12 +97,14 @@
   animation: fadeIn 0.4s ease;
 }
 
-.info-section, .current-version-info {
+.info-section,
+.current-version-info {
   padding: 1.5rem;
   height: fit-content;
 }
 
-.info-section h3, .current-version-info h3 {
+.info-section h3,
+.current-version-info h3 {
   font-size: 1.1rem;
   margin-bottom: 2rem;
   color: var(--text-primary);
@@ -158,7 +160,8 @@
   white-space: normal;
 }
 
-.loading-state, .error-state {
+.loading-state,
+.error-state {
   display: flex;
   align-items: center;
   justify-content: center;

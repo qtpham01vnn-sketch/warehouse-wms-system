@@ -3,7 +3,7 @@ import { Upload, CheckCircle2, Shield } from 'lucide-react';
 import { documentService } from '../../services/documentService';
 import { storageService } from '../../services/storageService';
 import { useAuth } from '../../context/AuthContext';
-import type { ISODocument, DocumentType, DocumentStatus, DocumentVisibility } from '../../types';
+import type { DocumentType, DocumentStatus } from '../../types';
 import './Form.css';
 
 interface DocumentFormProps {
@@ -15,17 +15,17 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  
+
   const [formData, setFormData] = useState({
     code: '',
     title: '',
     type: 'QT' as DocumentType,
-    department: profile?.department || '',
-    owner: profile?.full_name || '',
+    department_id: profile?.department || '',
+    owner_name: profile?.full_name || '',
     reviewer: '',
     approver: '',
     next_review_date: '',
-    visibility: 'department_only' as DocumentVisibility
+    access_scope: 'department' as 'department' | 'company'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,11 +41,9 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
       const fileUrl = await storageService.uploadDocument(formData.code, 'v1.0', file);
 
       // 2. Prepare metadata
-      const docData: Omit<ISODocument, 'id' | 'created_at' | 'updated_at'> = {
+      const docData: any = {
         ...formData,
         status: 'draft' as DocumentStatus,
-        published_date: new Date().toISOString().split('T')[0],
-        effective_date: new Date().toISOString().split('T')[0],
       };
 
       const versionData = {
@@ -57,12 +55,12 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
 
       // 3. Atomic creation
       await documentService.createDocumentWithVersion(
-        docData, 
-        versionData, 
-        user.id, 
+        docData,
+        versionData,
+        user.id,
         profile.full_name || 'User'
       );
-      
+
       onSuccess();
     } catch (error) {
       console.error('Error creating document:', error);
@@ -77,19 +75,19 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
       <div className="form-grid">
         <div className="form-group">
           <label>Mã tài liệu</label>
-          <input 
-            type="text" 
-            placeholder="VD: QT-CL-01" 
+          <input
+            type="text"
+            placeholder="VD: QT-CL-01"
             value={formData.code}
-            onChange={e => setFormData({...formData, code: e.target.value})}
-            required 
+            onChange={e => setFormData({ ...formData, code: e.target.value })}
+            required
           />
         </div>
         <div className="form-group">
           <label>Loại tài liệu</label>
-          <select 
+          <select
             value={formData.type}
-            onChange={e => setFormData({...formData, type: e.target.value as DocumentType})}
+            onChange={e => setFormData({ ...formData, type: e.target.value as DocumentType })}
           >
             <option value="QT">QT - Quy trình</option>
             <option value="HS">HS - Hồ sơ</option>
@@ -101,32 +99,32 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
 
       <div className="form-group">
         <label>Tên tài liệu</label>
-        <input 
-          type="text" 
-          placeholder="Tên đầy đủ của tài liệu" 
+        <input
+          type="text"
+          placeholder="Tên đầy đủ của tài liệu"
           value={formData.title}
-          onChange={e => setFormData({...formData, title: e.target.value})}
-          required 
+          onChange={e => setFormData({ ...formData, title: e.target.value })}
+          required
         />
       </div>
 
       <div className="form-grid">
         <div className="form-group">
           <label>Người xem xét (Reviewer)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={formData.reviewer}
-            onChange={e => setFormData({...formData, reviewer: e.target.value})}
-            required 
+            onChange={e => setFormData({ ...formData, reviewer: e.target.value })}
+            required
           />
         </div>
         <div className="form-group">
           <label>Người phê duyệt (Approver)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={formData.approver}
-            onChange={e => setFormData({...formData, approver: e.target.value})}
-            required 
+            onChange={e => setFormData({ ...formData, approver: e.target.value })}
+            required
           />
         </div>
       </div>
@@ -134,21 +132,21 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
       <div className="form-grid">
         <div className="form-group">
           <label>Ngày rà soát định kỳ</label>
-          <input 
-            type="date" 
+          <input
+            type="date"
             value={formData.next_review_date}
-            onChange={e => setFormData({...formData, next_review_date: e.target.value})}
-            required 
+            onChange={e => setFormData({ ...formData, next_review_date: e.target.value })}
+            required
           />
         </div>
         <div className="form-group">
           <label><Shield size={14} /> Phạm vi hiển thị</label>
-          <select 
-            value={formData.visibility}
-            onChange={e => setFormData({...formData, visibility: e.target.value as DocumentVisibility})}
+          <select
+            value={formData.access_scope}
+            onChange={e => setFormData({ ...formData, access_scope: e.target.value as any })}
           >
-            <option value="department_only">Chỉ trong phòng ban ({profile?.department})</option>
-            <option value="company_wide">Toàn công ty (Public)</option>
+            <option value="department">Chỉ trong phòng ban ({profile?.department})</option>
+            <option value="company">Toàn công ty (Public)</option>
           </select>
         </div>
       </div>
@@ -156,9 +154,9 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
       <div className="form-group">
         <label>File tài liệu (PDF/Word)</label>
         <div className={`file-upload-zone ${file ? 'has-file' : ''}`}>
-          <input 
-            type="file" 
-            onChange={e => setFile(e.target.files?.[0] || null)} 
+          <input
+            type="file"
+            onChange={e => setFile(e.target.files?.[0] || null)}
             id="file-input"
             hidden
           />

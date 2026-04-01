@@ -16,12 +16,13 @@ export interface ISODocument {
   code: string;
   title: string;
   type: DocumentType;
-  department: string;
-  owner: string;
+  department_id: string;
+  owner_id: string;
+  owner_name: string; // Giữ lại tên người soạn thảo để hiển thị
   reviewer: string;
   approver: string;
   status: DocumentStatus;
-  visibility: DocumentVisibility;
+  access_scope: 'department' | 'company';
   current_version_id?: string;
   published_date?: string;
   effective_date?: string;
@@ -48,6 +49,7 @@ export interface WorkflowLog {
   user_name: string;
   from_status: DocumentStatus | null;
   to_status: DocumentStatus;
+  comment?: string;
   timestamp: string;
 }
 
@@ -83,4 +85,22 @@ export interface ISOAlert {
   message: string;
   is_resolved: boolean;
   created_at: string;
+}
+
+export interface DepartmentStats {
+  department_id: string;
+  total: number;
+  active: number;
+  pending: number;
+  expiring: number;
+  obsolete: number;
+  status_color: 'green' | 'yellow' | 'orange' | 'red';
+}
+
+export interface DashboardSummary {
+  total: number;
+  active: number;
+  pending: number;
+  expiring: number;
+  obsolete: number;
 }
