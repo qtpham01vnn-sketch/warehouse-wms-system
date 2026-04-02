@@ -12,8 +12,21 @@ const DEPARTMENTS = [
   'P.KD'
 ];
 
+export interface PriorityItem {
+  id: string;
+  title: string;
+  type: 'expiring' | 'pending' | 'overdue';
+  department: string;
+  dueDate?: string;
+  status?: string;
+}
+
 export const dashboardService = {
-  async getStats(): Promise<{ departments: DepartmentStats[], summary: DashboardSummary }> {
+  async getStats(): Promise<{ 
+    departments: DepartmentStats[], 
+    summary: DashboardSummary,
+    priorityItems: PriorityItem[]
+  }> {
     // 1. Lấy toàn bộ tài liệu (được lọc bởi RLS tự động)
     const { data: docs, error } = await supabase
       .from('iso_documents')
@@ -64,10 +77,39 @@ export const dashboardService = {
       return { ...stats, status_color: color };
     });
 
-    // 4. Sắp xếp theo mức rủi ro (Đỏ -> Cam -> Vàng -> Xanh)
-    const colorPriority: Record<string, number> = { red: 0, orange: 1, yellow: 2, green: 3 };
-    departmentStats.sort((a, b) => colorPriority[a.status_color] - colorPriority[b.status_color]);
+    // 5. Lấy danh sách ưu tiên (Priority Items)
+    const priorityItems: PriorityItem[] = [
+      ...documents.filter(d => {
+        if (!d.next_review_date) return false;
+        const reviewDate = new Date(d.next_review_date);
+        return d.status === 'active' && reviewDate <= thirtyDaysFromNow && reviewDate >= now;
+      }).map(d => ({
+        id: d.id,
+        title: d.title,
+        type: 'expiring' as const,
+        department: d.department_id,
+        dueDate: d.next_review_date
+      })),
+      ...documents.filter(d => d.status === 'under_review').map(d => ({
+        id: d.id,
+        title: d.title,
+        type: 'pending' as const,
+        department: d.department_id,
+        status: 'Đang duyệt'
+      })),
+      ...documents.filter(d => {
+        if (!d.next_review_date) return false;
+        const reviewDate = new Date(d.next_review_date);
+        return d.status === 'active' && reviewDate < now;
+      }).map(d => ({
+        id: d.id,
+        title: d.title,
+        type: 'overdue' as const,
+        department: d.department_id,
+        dueDate: d.next_review_date
+      }))
+    ].slice(0, 5); // Giới hạn 5 item cho dashboard
 
-    return { departments: departmentStats, summary };
+    return { departments: departmentStats, summary, priorityItems };
   }
 };

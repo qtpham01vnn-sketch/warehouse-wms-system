@@ -45,3 +45,19 @@ RULES CORE – PHUONGNAM APP TA2
 * Có tiêu đề
 * Có phân cấp
 * Có logic rõ ràng
+## APP BUILD SAFETY RULES
+
+- Never assume database schema.
+- Always inspect real table names and column names before writing queries.
+- Never declare a feature complete until:
+  1. code is updated
+  2. database migration is applied
+  3. UI is verified
+  4. manual test passes
+
+- Do not block the whole app while waiting for profile fetch.
+- Auth loading must always exit safely with try/catch/finally.
+- Empty dashboard departments must still be visible with zero values.
+- Never build enterprise dashboards as long vertical lists.
+- Always prefer horizontal KPI layout and grid-based department tiles.
+- Alerts must derive from real document fields, not hardcoded numbers.

@@ -71,3 +71,13 @@ Generate full app:
 - React + TypeScript + Vite
 - Supabase integration
 - Full CRUD + upload + alertsw
+## ADDITIONAL ISO EXECUTION CAPABILITIES
+
+- Inspect and align real Supabase schema before building screens
+- Create safe SQL migrations for missing columns/tables
+- Resolve auth/profile mismatches without blocking route rendering
+- Design ISO dashboards as enterprise command centers
+- Use real data fields for alerts:
+  - expirydate
+  - nextreviewdate
+  - under_review status

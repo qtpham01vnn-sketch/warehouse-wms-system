@@ -55,3 +55,13 @@ Nguyên tắc:
 * Không nhảy bước
 * Không bỏ Planning
 * Không tự ý sáng tạo ngoài Rules
+## SCHEMA-FIRST APP BUILD WORKFLOW
+
+1. Inspect database schema before coding.
+2. Confirm required columns and constraints.
+3. Confirm auth/profile model.
+4. Confirm foreign keys and reference tables.
+5. Apply migrations before verifying UI.
+6. Verify route loading and auth flow.
+7. Verify real data rendering before dashboard polish.
+8. Push to GitHub after each stable phase.

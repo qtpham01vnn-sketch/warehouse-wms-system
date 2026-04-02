@@ -18,30 +18,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Get initial session
-    const setupAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const p = await authService.getProfile(session.user.id);
+    const loadProfile = async (userId: string) => {
+      try {
+        console.log('AUTH: loadProfile start', userId);
+        const p = await authService.getProfile(userId);
+        console.log('AUTH: profile =', p);
         setProfile(p);
+      } catch (err) {
+        console.error('AUTH: loadProfile error:', err);
+        setProfile(null);
       }
-      setLoading(false);
+    };
+
+    const setupAuth = async () => {
+      try {
+        console.log('AUTH: setupAuth start');
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('AUTH: session =', session, 'error =', error);
+
+        if (error) {
+          console.error('getSession error:', error);
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+
+        if (session?.user) {
+          setUser(session.user);
+          setLoading(false); // cho vào app trước
+          void loadProfile(session.user.id); // load profile nền
+        } else {
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('setupAuth error:', err);
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+      }
     };
 
     setupAuth();
 
-    // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const p = await authService.getProfile(session.user.id);
-        setProfile(p);
-      } else {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_, session) => {
+      try {
+        console.log('AUTH CHANGE: session =', session);
+
+        if (session?.user) {
+          setUser(session.user);
+          setLoading(false); // không chờ profile
+          void loadProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('onAuthStateChange error:', err);
         setUser(null);
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

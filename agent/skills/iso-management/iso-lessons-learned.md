@@ -56,3 +56,19 @@ The output must be:
 - stable
 - visually consistent
 - suitable for internal pilot deployment
+## LESSONS LEARNED — ISO APP REAL DEBUGGING
+
+1. Supabase Auth user does not automatically create a profile record.
+2. profiles.departmentid may reference departments.id, not department name.
+3. Do not use guessed values like 'ISO' if the real department id is 'd2'.
+4. iso_documents schema must be inspected before insert/query.
+5. Legacy fields may coexist:
+   - departmentid
+   - department_id
+   - doccode
+   - code
+6. Some columns may use camelCase and require quoting, e.g. "changeDescription".
+7. AuthContext must never keep the whole app blocked while profile loading is pending.
+8. ProtectedRoute should rely on loading/user safely and not assume profile always exists.
+9. Dashboards must show all departments even when data is empty.
+10. Missing support tables such as iso_certificates can break dashboard sections.

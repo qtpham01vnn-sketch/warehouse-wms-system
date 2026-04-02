@@ -1,20 +1,32 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, Award, Bell, Settings, LogOut } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, FileText, Award, Bell, 
+  LogOut, User, Shield 
+} from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar: React.FC = () => {
+  const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <aside className="sidebar glass-card">
-      <div className="sidebar-brand">
-        <h2 className="gradient-text">ISO Pro</h2>
-        <span className="brand-dot"></span>
+      <div className="sidebar-header">
+        <Shield className="logo-icon" size={28} />
+        <h2 className="gradient-text">ISO Command</h2>
       </div>
       
       <nav className="sidebar-nav">
         <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={20} />
-          <span>Tổng quan</span>
+          <span>Dashboard</span>
         </NavLink>
         
         <NavLink to="/documents" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
@@ -35,12 +47,20 @@ const Sidebar: React.FC = () => {
       </nav>
       
       <div className="sidebar-footer">
-        <NavLink to="/settings" className="nav-item">
-          <Settings size={20} />
-          <span>Cài đặt</span>
-        </NavLink>
-        <button className="nav-item logout-btn">
-          <LogOut size={20} />
+        {profile && (
+          <div className="user-profile-box">
+            <div className="user-avatar">
+              <User size={18} />
+            </div>
+            <div className="user-text">
+              <p className="user-name">{profile.full_name || 'User'}</p>
+              <p className="user-role">{profile.role}</p>
+            </div>
+          </div>
+        )}
+        
+        <button className="logout-btn" onClick={handleSignOut}>
+          <LogOut size={18} />
           <span>Đăng xuất</span>
         </button>
       </div>
@@ -49,3 +69,4 @@ const Sidebar: React.FC = () => {
 };
 
 export default Sidebar;
+
