@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { dashboardService, type PriorityItem } from '../../services/dashboardService';
+import { dashboardService, type PriorityItem, ISO_DEPARTMENTS } from '../../services/dashboardService';
 import type { DashboardSummary, DepartmentStats } from '../../types';
 import './Dashboard.css';
 
@@ -67,7 +67,7 @@ const Dashboard: React.FC = () => {
         <div className="header-actions">
           <div className="scope-chip glass-card">
             <LayoutGrid size={14} />
-            <span>{isAdmin ? 'Toàn công ty' : `Bộ phận: ${profile?.department}`}</span>
+            <span>{isAdmin ? 'Toàn công ty' : `Bộ phận: ${ISO_DEPARTMENTS.find(d => d.id === profile?.departmentid)?.label || profile?.departmentid}`}</span>
           </div>
           
           <div className="action-buttons">
@@ -149,7 +149,7 @@ const Dashboard: React.FC = () => {
             onClick={() => handleTileClick(dept.department_id)}
           >
             <div className="tile-header">
-              <h3>{dept.department_id}</h3>
+              <h3>{dept.department_name}</h3>
               <div className={`status-indicator ${dept.status_color}`}></div>
             </div>
             

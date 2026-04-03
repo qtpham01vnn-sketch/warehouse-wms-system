@@ -7,26 +7,26 @@ export interface Profile {
   id: string;
   full_name: string | null;
   role: UserRole;
-  department: string;
+  departmentid: string; // Verified column
   created_at: string;
 }
 
 export interface ISODocument {
   id: string;
-  code: string;
-  title: string;
+  code: string; // Verified column
+  doccode: string; // Verified column (NOT NULL)
+  version: string; // Verified column (NOT NULL)
+  name: string; // Verified column
   type: DocumentType;
-  department_id: string;
-  owner_id: string;
-  owner_name: string; // Giữ lại tên người soạn thảo để hiển thị
-  reviewer: string;
-  approver: string;
+  departmentid: string; // Verified column
+  owner_id: string; // Verified column
   status: DocumentStatus;
-  access_scope: 'department' | 'company';
+  access_scope: 'department_only' | 'company_wide'; // Verified column (not visibility)
+  url?: string; // Verified column (stores file link)
   current_version_id?: string;
   published_date?: string;
   effective_date?: string;
-  next_review_date?: string;
+  nextreviewdate?: string; // Verified column
   created_at: string;
   updated_at: string;
 }
@@ -89,6 +89,7 @@ export interface ISOAlert {
 
 export interface DepartmentStats {
   department_id: string;
+  department_name: string; // Added for display label
   total: number;
   active: number;
   pending: number;

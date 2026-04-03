@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Plus, Eye, Download, FileSpreadsheet } from 'lucide-react';
 import { documentService } from '../../services/documentService';
+import { ISO_DEPARTMENTS } from '../../services/dashboardService';
 import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/shared/Modal';
 import DocumentForm from '../../components/specific/DocumentForm';
@@ -26,7 +27,7 @@ const DocumentHub: React.FC = () => {
     try {
       const data = await documentService.getDocuments({
         type: typeFilter !== 'ALL' ? typeFilter : undefined,
-        department_id: deptFilter !== 'ALL' ? deptFilter : undefined,
+        departmentid: deptFilter !== 'ALL' ? deptFilter : undefined,
         search: searchTerm
       });
       setDocuments(data);
@@ -56,6 +57,10 @@ const DocumentHub: React.FC = () => {
       console.error('Export failed:', error);
       alert('Không thể xuất báo cáo Excel.');
     }
+  };
+
+  const getDeptLabel = (id: string) => {
+    return ISO_DEPARTMENTS.find(d => d.id === id)?.label || id;
   };
 
   const canCreate = profile?.role !== 'Standard';
@@ -95,14 +100,9 @@ const DocumentHub: React.FC = () => {
           <Filter size={18} />
           <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
             <option value="ALL">Tất cả phòng ban</option>
-            <option value="Ban ISO">Ban ISO</option>
-            <option value="P.TC-HC">P.TC-HC</option>
-            <option value="Phòng KHTH">Phòng KHTH</option>
-            <option value="P.TK">P.TK</option>
-            <option value="P.KT-CN">P.KT-CN</option>
-            <option value="PXSX">PXSX</option>
-            <option value="PXCĐ NL">PXCĐ NL</option>
-            <option value="P.KD">P.KD</option>
+            {ISO_DEPARTMENTS.map(dept => (
+              <option key={dept.id} value={dept.id}>{dept.label}</option>
+            ))}
           </select>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)}>
             <option value="ALL">Tất cả loại</option>
@@ -125,7 +125,7 @@ const DocumentHub: React.FC = () => {
                 <th>Tên tài liệu</th>
                 <th>Phòng ban</th>
                 <th>Trạng thái</th>
-                <th>Ngày hiệu lực</th>
+                <th>Ngày soát xét</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -135,11 +135,11 @@ const DocumentHub: React.FC = () => {
                   <td className="code-cell">{doc.code}</td>
                   <td className="title-cell">
                     <span className="type-tag">{doc.type}</span>
-                    {doc.title}
+                    {doc.name}
                   </td>
-                  <td>{doc.department_id}</td>
+                  <td>{getDeptLabel(doc.departmentid)}</td>
                   <td><span className={`badge badge-${doc.status}`}>{doc.status}</span></td>
-                  <td>{doc.effective_date || 'N/A'}</td>
+                  <td>{doc.nextreviewdate || 'N/A'}</td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className="actions-cell">
                       <button className="btn-icon" title="Xem" onClick={() => navigate(`/documents/${doc.id}`)}>
