@@ -22,17 +22,21 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
     name: '' as string,
     type: 'QT' as DocumentType,
     departmentid: profile?.departmentid || '',
-    ownername: profile?.full_name || '',
-    reviewer: '',
-    approver: '',
+    drafter_name: '', // Standardized business metadata
+    reviewer_name: '', // Standardized business metadata
+    approver_name: '', // Standardized business metadata
     nextreviewdate: '',
     access_scope: 'department_only' as 'department_only' | 'company_wide'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !user || !profile) {
-      alert('Vui lòng chọn file và đảm bảo bạn đã đăng nhập.');
+    if (!file) {
+      alert('Vui lòng chọn file');
+      return;
+    }
+    if (!user) {
+      alert('Bạn chưa đăng nhập');
       return;
     }
 
@@ -54,7 +58,7 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
         version_number: 'v1.0',
         file_url: fileUrl,
         change_log: 'Khởi tạo tài liệu mới.',
-        uploader_name: profile.full_name || 'Hệ thống'
+        uploader_name: formData.drafter_name || 'Hệ thống'
       };
 
       // 3. Document creation
@@ -63,7 +67,7 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
         docData,
         versionData,
         user.id,
-        profile.full_name || 'User'
+        formData.drafter_name || 'User'
       );
       console.log('Document created successfully!');
 
@@ -133,8 +137,8 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
           <label>Người soạn thảo</label>
           <input
             type="text"
-            value={formData.ownername}
-            onChange={e => setFormData({ ...formData, ownername: e.target.value })}
+            value={formData.drafter_name}
+            onChange={e => setFormData({ ...formData, drafter_name: e.target.value })}
             required
           />
         </div>
@@ -145,8 +149,8 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
           <label>Người xem xét (Reviewer)</label>
           <input
             type="text"
-            value={formData.reviewer}
-            onChange={e => setFormData({ ...formData, reviewer: e.target.value })}
+            value={formData.reviewer_name}
+            onChange={e => setFormData({ ...formData, reviewer_name: e.target.value })}
             required
           />
         </div>
@@ -154,8 +158,8 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onSuccess, onCancel }) => {
           <label>Người phê duyệt (Approver)</label>
           <input
             type="text"
-            value={formData.approver}
-            onChange={e => setFormData({ ...formData, approver: e.target.value })}
+            value={formData.approver_name}
+            onChange={e => setFormData({ ...formData, approver_name: e.target.value })}
             required
           />
         </div>

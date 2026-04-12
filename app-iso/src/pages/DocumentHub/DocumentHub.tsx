@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Plus, Eye, Download, FileSpreadsheet } from 'lucide-react';
+import { Search, Filter, Plus, Eye, Download, FileSpreadsheet, FileArchive } from 'lucide-react';
 import { documentService } from '../../services/documentService';
 import { ISO_DEPARTMENTS } from '../../services/dashboardService';
 import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/shared/Modal';
 import DocumentForm from '../../components/specific/DocumentForm';
+import DocumentImportModal from '../../components/specific/DocumentImportModal';
 import type { ISODocument, DocumentType } from '../../types';
 import './DocumentHub.css';
 
@@ -18,6 +19,7 @@ const DocumentHub: React.FC = () => {
   const [documents, setDocuments] = useState<ISODocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<DocumentType | 'ALL'>('ALL');
   const [deptFilter, setDeptFilter] = useState<string>(initialDept);
@@ -78,10 +80,16 @@ const DocumentHub: React.FC = () => {
             <span>Xuất báo cáo ISO</span>
           </button>
           {canCreate && (
-            <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-              <Plus size={18} />
-              <span>Thêm tài liệu mới</span>
-            </button>
+            <>
+              <button className="btn-secondary" onClick={() => setShowImportModal(true)}>
+                <FileArchive size={18} />
+                <span>Import ZIP</span>
+              </button>
+              <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+                <Plus size={18} />
+                <span>Thêm tài liệu mới</span>
+              </button>
+            </>
           )}
         </div>
       </header>
@@ -125,6 +133,7 @@ const DocumentHub: React.FC = () => {
                 <th>Tên tài liệu</th>
                 <th>Phòng ban</th>
                 <th>Trạng thái</th>
+                <th>Ngày tải lên</th>
                 <th>Ngày soát xét</th>
                 <th>Thao tác</th>
               </tr>
@@ -139,16 +148,25 @@ const DocumentHub: React.FC = () => {
                   </td>
                   <td>{getDeptLabel(doc.departmentid)}</td>
                   <td><span className={`badge badge-${doc.status}`}>{doc.status}</span></td>
+                  <td className="date-cell">{doc.created_at ? new Date(doc.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
                   <td>{doc.nextreviewdate || 'N/A'}</td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className="actions-cell">
-                      <button className="btn-icon" title="Xem" onClick={() => navigate(`/documents/${doc.id}`)}>
+                      <button className="btn-icon" title="Xem" onClick={() => {
+                        console.log('[HUB VIEW] doc:', JSON.stringify({ id: doc.id, code: doc.code, url: doc.url, current_version_id: doc.current_version_id }));
+                        navigate(`/documents/${doc.id}`);
+                      }}>
                         <Eye size={18} />
                       </button>
                       <button
                         className="btn-icon"
                         title="Tải về"
-                        onClick={() => doc.current_version_id && user && profile && documentService.getFileActions(doc.id, doc.current_version_id, user.id, profile.full_name || 'User').download()}
+                        onClick={() => {
+                          console.log('[HUB DOWNLOAD] doc:', JSON.stringify({ id: doc.id, code: doc.code, url: doc.url, current_version_id: doc.current_version_id }));
+                          if (user && profile) {
+                            documentService.getFileActions(doc.id, doc.url || '', user.id, profile.full_name || 'User').download();
+                          }
+                        }}
                       >
                         <Download size={18} />
                       </button>
@@ -158,7 +176,7 @@ const DocumentHub: React.FC = () => {
               ))}
               {documents.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="empty-state">Không tìm thấy tài liệu phù hợp.</td>
+                  <td colSpan={7} className="empty-state">Không tìm thấy tài liệu phù hợp.</td>
                 </tr>
               )}
             </tbody>
@@ -179,6 +197,16 @@ const DocumentHub: React.FC = () => {
           onCancel={() => setIsModalOpen(false)}
         />
       </Modal>
+      {showImportModal && (
+        <DocumentImportModal 
+          isOpen={showImportModal} 
+          onClose={() => setShowImportModal(false)} 
+          onSuccess={() => {
+            fetchDocs();
+            setShowImportModal(false);
+          }} 
+        />
+      )}
     </div>
   );
 };

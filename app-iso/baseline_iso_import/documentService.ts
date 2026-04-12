@@ -280,11 +280,11 @@ export const documentService = {
         .order('file_type', { ascending: true });
 
       if (docFiles && docFiles.length > 0) {
-        // Priority 1: Main QT file from ZIP
         const qtFile = docFiles.find((f: any) => f.file_type === 'QT');
-        if (qtFile) {
-          console.log('[resolveFileUrl] Found QT in iso_document_files:', qtFile.file_url);
-          return qtFile.file_url;
+        const resolved = qtFile?.file_url || docFiles[0]?.file_url;
+        if (resolved) {
+          console.log('[resolveFileUrl] Found in iso_document_files:', resolved);
+          return resolved;
         }
       }
     } catch (err) {
@@ -303,23 +303,11 @@ export const documentService = {
       return doc.url;
     }
 
+    // 3. Fallback
     if (fallbackUrl) {
       console.log('[resolveFileUrl] Using fallback:', fallbackUrl);
       return fallbackUrl;
     }
-
-    // 4. Final attempt: Return any file from iso_document_files if no QT found
-    try {
-      const { data: allFiles } = await supabase
-        .from('iso_document_files')
-        .select('file_url')
-        .eq('document_id', documentId)
-        .limit(1);
-      if (allFiles?.[0]?.file_url) {
-        console.log('[resolveFileUrl] Found generic file in iso_document_files:', allFiles[0].file_url);
-        return allFiles[0].file_url;
-      }
-    } catch (err) {}
 
     console.warn('[resolveFileUrl] No file URL found for document:', documentId);
     return null;
